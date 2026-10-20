@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign in — Seline</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/static/login.css?v=1">
+
+  <!-- Auth core first: installs the authenticated fetch() wrapper. -->
+  <script src="/static/auth.js?v=1"></script>
+</head>
+<body>
+
+  <main class="login-wrap">
+    <section class="login-card">
+      <div class="login-brand">
+        <span class="brand-dot"></span>
+        <span>Seline</span>
+      </div>
+      <p class="login-sub">Developer access. Sign in to reach the dashboard, assistant, and databases.</p>
+
+      <form id="login-form" autocomplete="on" novalidate>
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" placeholder="you@example.com"
+                 autocomplete="username" autocapitalize="off" spellcheck="false" required>
+        </div>
+
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" placeholder="••••••••"
+                 autocomplete="current-password" required>
+        </div>
+        <div class="field" id="mfa-field" hidden>
+          <label for="mfa-code">Authenticator code</label>
+          <input id="mfa-code" name="mfa-code" type="text" inputmode="numeric"
+                 pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code">
+        </div>
+
+        <button id="login-btn" class="login-btn" type="submit">
+          <span class="spinner"></span>
+          <span class="btn-label">Sign in</span>
+        </button>
+      </form>
+
+      <div id="login-error" class="login-error" role="alert"></div>
+
+      <p class="login-foot">Jarvis · local instance</p>
+    </section>
+  </main>
+
+  <script src="/static/login.js?v=1" defer></script>
+</body>
+</html>

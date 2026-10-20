@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <title>Owner dashboard — Seline</title>
+  <link rel="stylesheet" href="/static/client.css?v=1">
+  <script src="/static/auth.js?v=3"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-dot"></span><span>Seline</span></div>
+    <div class="topbar-actions">
+      <span class="view-badge">View only</span>
+      <select id="language-select" aria-label="Language"><option value="en">EN</option><option value="ro">RO</option></select>
+      <select id="currency-select" aria-label="Currency"><option value="EUR">EUR</option><option value="RON">RON</option></select>
+      <span id="last-updated" class="muted">Connecting…</span>
+      <button id="theme-toggle" class="icon-button" type="button" aria-label="Toggle theme">☼</button>
+      <button id="logout-btn" class="button secondary" type="button">Sign out</button>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="hero">
+      <div>
+        <p id="demo-mode-label" class="eyebrow" hidden>FICTIONAL DATA MODE</p>
+        <p class="eyebrow">OWNER OVERVIEW</p>
+        <h1 id="business-name">Your business</h1>
+        <p id="business-subtitle" class="muted">Sales, stock, and cash flow for the last 30 days.</p>
+      </div>
+      <button id="refresh-button" class="button" type="button">Refresh data</button>
+    </section>
+    <div id="client-orb" class="client-orb" aria-label="Assistant activity orb"><span></span></div>
+    <section class="toolbar"><div class="range-buttons" role="group" aria-label="Date range">
+      <button class="range-button" data-days="1">Today</button><button class="range-button" data-days="7">7 days</button>
+      <button class="range-button active" data-days="30">30 days</button><button class="range-button" data-days="90">90 days</button>
+      <label>Custom <input id="range-start" type="date"><input id="range-end" type="date"></label>
+    </div></section>
+
+    <div id="error" class="notice error" role="alert"></div>
+    <section id="kpis" class="kpis" aria-live="polite"></section>
+
+    <section class="content-grid">
+      <article id="empty-business" class="panel empty-state" hidden>
+        <p class="eyebrow">GET STARTED</p><h2>Connect your business data</h2>
+        <p class="muted">Complete these three steps to turn your dashboard into an owner overview.</p>
+        <ol class="onboarding"><li>Connect your point-of-sale export</li><li>Import products and sales</li><li>Review your first daily summary</li></ol>
+        <button class="button" type="button" id="onboarding-cta">Start setup</button>
+      </article>
+      <article class="panel chart-panel dashboard-content">
+        <div class="panel-heading"><div><p class="eyebrow">PERFORMANCE</p><h2>Revenue trend</h2></div><span id="data-status" class="muted">Checking…</span></div>
+        <div id="revenue-chart" class="chart" aria-label="Revenue trend chart"></div>
+      </article>
+      <article class="panel"><div class="panel-heading"><div><p class="eyebrow">BUSY HOURS</p><h2>When customers visit</h2></div></div><div id="busy-heatmap" class="heatmap"></div><div class="legend">Less <i></i><i></i><i></i><i></i> More</div></article>
+      <article class="panel">
+        <div class="panel-heading"><div><p class="eyebrow">INVENTORY</p><h2>Stock alerts</h2></div></div>
+        <div id="stock-alerts" class="list"></div>
+      </article>
+    </section>
+
+    <section class="content-grid lower">
+      <article class="panel">
+        <div class="panel-heading"><div><p class="eyebrow">PRODUCTS</p><h2>Top sellers</h2></div></div>
+        <div id="top-products" class="list"></div>
+      </article>
+      <article class="panel assistant-panel">
+        <div class="panel-heading"><div><p class="eyebrow">ASSISTANT</p><h2>Ask about your business</h2></div><div class="assistant-orb" aria-label="Assistant activity orb"><span></span></div></div>
+        <div class="chips"><button type="button">How are sales today?</button><button type="button">What needs reordering?</button><button type="button">Best seller?</button></div>
+        <div id="assistant-messages" class="assistant-messages"><p class="muted">Ask for today’s sales, low stock, or product performance.</p></div>
+        <form id="assistant-form" class="assistant-form">
+          <input id="assistant-input" type="text" maxlength="4000" placeholder="How are sales today?" autocomplete="off">
+          <button id="mic-button" class="button secondary" type="button" title="Use microphone">🎙</button>
+          <button class="button" type="submit">Ask</button>
+        </form>
+      </article>
+      <article class="panel"><div class="panel-heading"><div><p class="eyebrow">CASH FLOW</p><h2>Money in / out</h2></div></div><div id="cash-flow" class="cash-flow"></div><p class="muted">14-day forecast based on recent summaries.</p><table id="expenses"><tbody></tbody></table></article>
+    </section>
+  </main>
+  <script src="/static/client.js?v=1" defer></script>
+</body>
+</html>

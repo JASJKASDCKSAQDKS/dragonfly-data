@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seline — Voice-First AI</title>
+
+  <!-- Typography: Inter (UI) + JetBrains Mono (timestamps/numbers) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/static/voice.css?v=2">
+  <link rel="stylesheet" href="/static/dbadmin.css?v=2">
+
+  <!-- Auth core — must load before voice.js/dbadmin.js so every fetch()
+       is authenticated and unauthenticated visitors go to /login. -->
+  <script src="/static/auth.js?v=1"></script>
+
+  <!-- Three.js via CDN importmap -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+
+  <!-- Cosmic orb scene (z-index 1) -->
+  <canvas id="orb-canvas"></canvas>
+
+  <!-- Glass header -->
+  <header class="header overlay">
+    <div class="wordmark">
+      <span class="wordmark-dot"></span>
+      <span>Seline</span>
+    </div>
+    <div class="header-right">
+      <button id="header-transcript-btn" class="ghost-btn" title="Transcript (T)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+      </button>
+      <button id="alerts-btn" class="ghost-btn" title="Activity">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <span id="alerts-badge" class="ghost-badge hidden">0</span>
+      </button>
+      <button id="dbadmin-btn" class="ghost-btn" title="Databases">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <ellipse cx="12" cy="5" rx="9" ry="3"/>
+          <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+          <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+        </svg>
+      </button>
+      <button id="clients-btn" class="ghost-btn" title="Client logins">🔑</button>
+      <a id="developer-console-link" class="ghost-btn" style="display:none" href="/developer" title="Developer console">⚙</a>
+      <button id="model-btn" class="ghost-btn" title="Switch model">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/>
+          <line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/>
+          <line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/>
+          <line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/>
+          <line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/>
+        </svg>
+      </button>
+      <button id="killswitch-btn" class="ghost-btn" title="Kill switch (pause heartbeat)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/>
+        </svg>
+      </button>
+      <button id="logout-btn" class="ghost-btn" title="Sign out">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+      </button>
+      <span id="status-dot" class="status-dot" title="Status"></span>
+    </div>
+  </header>
+
+  <!-- Model picker dropdown -->
+  <div id="model-menu" class="model-menu hidden">
+    <div class="model-menu-title">Active model</div>
+    <div id="model-menu-list"></div>
+  </div>
+
+  <!-- Right-side activity panel -->
+  <aside id="activity-panel" class="activity-panel overlay">
+    <button id="panel-toggle" class="panel-toggle" title="Collapse panel">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="9 18 15 12 9 6"/>
+      </svg>
+    </button>
+
+    <div class="panel-section">
+      <div class="panel-section-header">
+        <span>Reminders</span>
+        <span id="panel-count-reminders" class="panel-count">0</span>
+      </div>
+      <div id="panel-list-reminders"></div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-section-header">
+        <span>Notices</span>
+        <span id="panel-count-notices" class="panel-count">0</span>
+      </div>
+      <div id="panel-list-notices"></div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-section-header">
+        <span>Memories</span>
+        <span id="panel-count-memories" class="panel-count">0</span>
+      </div>
+      <div id="panel-list-memories"></div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-section-header">
+        <span>Audit</span>
+        <span id="panel-count-audit" class="panel-count">0</span>
+      </div>
+      <div id="panel-list-audit"></div>
+    </div>
+  </aside>
+
+  <div id="clients-overlay" class="db-overlay hidden">
+    <div class="db-window clients-window">
+      <div class="db-header">
+        <div>Client logins<span class="db-sub">owner credentials for generated databases</span></div>
+        <button id="clients-close" class="db-close" title="Close">✕</button>
+      </div>
+      <div id="clients-list" class="clients-list">
+        <div class="panel-empty">Loading…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating response cards -->
+  <div id="cards-layer" class="cards-layer overlay"></div>
+
+  <!-- Chat sidebar (left) — typed conversation, open by default -->
+  <aside id="chat-sidebar" class="chat-sidebar overlay">
+    <div class="transcript-header">
+      <span>Messages</span>
+      <button id="chat-collapse" class="transcript-close" title="Collapse chat (T)">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
+    </div>
+    <div id="transcript-messages" class="transcript-messages"></div>
+    <div class="transcript-input-row">
+      <input id="transcript-input" type="text" placeholder="Type a message…" autocomplete="off">
+      <button id="transcript-send" class="transcript-send">Send</button>
+    </div>
+    <button id="chat-handle" class="chat-sidebar-handle" title="Open chat (T)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+    </button>
+  </aside>
+
+  <!-- Bottom mic control bar -->
+  <div class="mic-bar overlay">
+    <button id="mic-button" class="mic-button" title="Toggle listening">
+      <svg class="icon-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+        <line x1="12" y1="19" x2="12" y2="23"/>
+        <line x1="8" y1="23" x2="16" y2="23"/>
+      </svg>
+      <svg class="icon-stop" viewBox="0 0 24 24">
+        <rect x="7" y="7" width="10" height="10" rx="2" fill="currentColor"/>
+      </svg>
+    </button>
+    <div id="mic-hint" class="mic-hint">Tap or say 'Hey Seline'</div>
+  </div>
+
+  <!-- Databases admin panel (fullscreen overlay) -->
+  <div id="db-overlay" class="db-overlay hidden">
+    <div class="db-window">
+      <div class="db-header">
+        <div>Databases<span class="db-sub">browse &amp; edit — every change is immediate</span></div>
+        <button id="db-close" class="db-close" title="Close (Esc)">✕</button>
+      </div>
+      <div class="db-body">
+        <aside id="db-tabs" class="db-tabs"></aside>
+        <main class="db-main">
+          <div id="db-tables" class="db-tables"></div>
+          <div id="db-grid-wrap" class="db-grid-wrap">
+            <div class="db-grid-toolbar">
+              <input id="db-search" placeholder="Search rows…" autocomplete="off">
+              <button id="db-add-row" class="db-add-row">+ Add row</button>
+              <button id="db-add-col" class="db-add-row">+ Column</button>
+            </div>
+            <div id="db-grid" class="db-grid"></div>
+            <div id="db-pager" class="db-pager"></div>
+          </div>
+          <div id="db-activity" class="db-activity" style="display:none;"></div>
+          <div id="db-template" class="db-template" style="display:none;"></div>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row add/edit modal -->
+  <div id="db-row-modal" class="modal-backdrop hidden">
+    <div class="modal-card" style="width:560px">
+      <div class="modal-header">
+        <h3 id="db-modal-title">Add row</h3>
+      </div>
+      <div class="modal-body">
+        <div id="db-form" class="db-form"></div>
+        <div id="db-form-error" class="db-form-error"></div>
+      </div>
+      <div class="modal-footer">
+        <button id="db-modal-cancel" class="btn-deny">Cancel</button>
+        <button id="db-modal-save" class="btn-approve">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add-column modal -->
+  <div id="db-col-modal" class="modal-backdrop hidden">
+    <div class="modal-card" style="width:420px">
+      <div class="modal-header">
+        <h3>Add column</h3>
+      </div>
+      <div class="modal-body">
+        <div class="db-form" style="grid-template-columns: 1fr;">
+          <div class="form-field">
+            <label>Column name <b style="color:var(--danger)">*</b></label>
+            <input id="db-col-name" placeholder="e.g. supplier_phone" autocomplete="off">
+          </div>
+          <div class="form-field">
+            <label>Type</label>
+            <select id="db-col-type">
+              <option>VARCHAR(150)</option>
+              <option>VARCHAR(255)</option>
+              <option>TEXT</option>
+              <option>INT</option>
+              <option>BIGINT</option>
+              <option>DECIMAL(10,2)</option>
+              <option>DATE</option>
+              <option>DATETIME</option>
+              <option>TIMESTAMP</option>
+              <option>TINYINT(1)</option>
+            </select>
+          </div>
+        </div>
+        <div id="db-col-error" class="db-form-error"></div>
+      </div>
+      <div class="modal-footer">
+        <button id="db-col-cancel" class="btn-deny">Cancel</button>
+        <button id="db-col-save" class="btn-approve">Add column</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Safety gate modal -->
+  <div id="safety-modal" class="modal-backdrop hidden">
+    <div class="modal-card warning-border">
+      <div class="modal-header">
+        <svg class="warning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        <h3>Safety Confirmation Required</h3>
+      </div>
+      <div class="modal-body">
+        <p class="modal-reason" id="modal-reason-text">Destructive operation requested</p>
+        <div class="modal-action-box">
+          <span class="label">Action:</span> <strong id="modal-action-name">delete_file</strong>
+          <pre id="modal-action-args">{}</pre>
+        </div>
+        <p class="warning-note">Seline operates under a strict Never-Without-Asking posture for external actions and deletions.</p>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-modal-deny" class="btn-deny">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+          Deny Action
+        </button>
+        <button id="btn-modal-approve" class="btn-approve">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          Approve &amp; Execute
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/static/orb.js?v=2"></script>
+  <script src="/static/voice.js?v=2" defer></script>
+  <script src="/static/dbadmin.js?v=2" defer></script>
+  <script src="/static/client-admin.js?v=1" defer></script>
+</body>
+</html>

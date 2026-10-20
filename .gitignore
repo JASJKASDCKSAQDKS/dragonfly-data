@@ -1,0 +1,28 @@
+# Secrets — never commit
+.env
+
+# Virtual environments
+.venv/
+venv/
+
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Runtime artifacts
+*.log
+test.wav
+*.wav
+*.pcm
+
+# Tooling
+.freebuff/
+.vercel/
+
+# OS noise
+.DS_Store
+.andromity/

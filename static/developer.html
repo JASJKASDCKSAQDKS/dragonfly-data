@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Seline — Developer console</title>
+  <link rel="stylesheet" href="/static/voice.css?v=2">
+  <link rel="stylesheet" href="/static/developer.css?v=1">
+  <script src="/static/auth.js?v=3"></script>
+</head>
+<body class="developer-page">
+  <header class="developer-topbar">
+    <a class="developer-brand" href="/app"><span class="wordmark-dot"></span>Seline <small>Developer console</small></a>
+    <div class="developer-actions">
+      <span id="health-summary" class="health-pill">Checking health…</span>
+      <a class="developer-link" href="/app">Dashboard</a>
+      <button id="logout-btn" class="developer-button secondary">Sign out</button>
+    </div>
+  </header>
+  <main class="developer-shell">
+    <div id="console-error" class="console-error hidden"></div>
+    <section class="console-heading">
+      <div><p class="eyebrow">OPERATIONS</p><h1>Developer console</h1><p class="muted">Manage business tenants and client access without exposing credentials.</p></div>
+      <button id="refresh-console" class="developer-button">Refresh</button>
+    </section>
+    <section class="console-panel analytics-preview">
+      <div class="panel-heading"><div><p class="eyebrow">FICTIONAL TENANT PREVIEW</p><h2>Client analytics simulation</h2><p class="muted">Same dashboard metrics, clearly marked as non-production data.</p></div><div class="client-orb" aria-label="Assistant activity orb"><span></span></div></div>
+      <div class="preview-kpis"><strong>€18,462<small>Revenue</small></strong><strong>€10,731<small>Gross profit</small></strong><strong>58.1%<small>Margin</small></strong><strong>1,284<small>Transactions</small></strong></div>
+      <div id="preview-chart" class="preview-chart" aria-label="Fictional revenue trend"></div>
+      <a class="developer-link" href="/client?demo=1">Open full client simulation →</a>
+    </section>
+    <div class="console-grid">
+      <section class="console-panel">
+        <div class="panel-heading"><div><h2>Tenants</h2><p class="muted">Provisioning and lifecycle</p></div><button id="show-tenant-form" class="developer-button">+ New tenant</button></div>
+        <form id="tenant-form" class="tenant-form hidden">
+          <input name="name" required pattern="[a-z][a-z0-9_]*" maxlength="63" placeholder="tenant_slug">
+          <input name="display_name" required maxlength="150" placeholder="Business name">
+          <input name="timezone" value="UTC" placeholder="Timezone">
+          <input name="business_day_start_hour" type="number" min="0" max="23" value="6" aria-label="Business day start hour">
+          <button class="developer-button" type="submit">Create tenant</button>
+        </form>
+        <div id="tenant-list" class="console-list"><div class="empty">Loading…</div></div>
+      </section>
+      <section class="console-panel">
+        <div class="panel-heading"><div><h2>Client accounts</h2><p class="muted">Credentials are redacted by default.</p></div></div>
+        <div id="client-list" class="console-list"><div class="empty">Loading…</div></div>
+      </section>
+    </div>
+    <div class="console-grid lower-grid">
+      <section class="console-panel">
+        <div class="panel-heading"><div><h2>Audit log</h2><p class="muted">Recent developer and system activity</p></div><label class="limit-control">Rows <select id="audit-limit"><option>20</option><option>50</option><option>100</option></select></label></div>
+        <pre id="audit-list" class="audit-list">Loading…</pre>
+      </section>
+      <section class="console-panel">
+        <div class="panel-heading"><div><h2>System health</h2><p class="muted">Process and application readiness</p></div></div>
+        <div id="health-list" class="health-list"><div class="empty">Loading…</div></div>
+      </section>
+    </div>
+  </main>
+  <script src="/static/developer.js?v=1" defer></script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Jarvis AI Assistant
+Comment=Launch Jarvis AI Web Dashboard
+Exec=bash -c 'cd "/home/parizle/Desktop/ai project" && ./start.sh'
+Path=/home/parizle/Desktop/ai project
+Icon=utilities-terminal
+Terminal=true
+Categories=Utility;Development;
